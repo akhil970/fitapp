@@ -171,6 +171,16 @@ export async function listWorkoutSummaries(limit = 50, offset = 0): Promise<Work
   return res[0].rows.raw() as WorkoutSummary[];
 }
 
+/**
+ * Delete a workout log and all its sets
+ */
+export async function deleteWorkoutLog(logId: number) {
+  const db = await getDb();
+  // Delete sets first to avoid orphaned data
+  await db.executeSql('DELETE FROM workout_sets WHERE workout_log_id = ?;', [logId]);
+  await db.executeSql('DELETE FROM workout_logs WHERE id = ?;', [logId]);
+}
+
 /** Summary for a single workout id (same fields as above) */
 export async function getWorkoutSummary(workoutId: number): Promise<WorkoutSummary | undefined> {
   const rows = await listWorkoutSummaries(1, 0);
