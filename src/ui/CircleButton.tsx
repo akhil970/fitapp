@@ -8,13 +8,13 @@ interface CircleButtonProps {
   style?: ViewStyle;
 }
 
-export default function CircleButton({ label, active, onPress, style }: CircleButtonProps) {
+export default function CircleButton({ label, active, onPress, style, fontSize }: CircleButtonProps & { fontSize?: number }) {
   return (
     <Pressable
       onPress={onPress}
       style={[styles.circle, active && styles.active, style]}
     >
-      <Text style={[styles.text, active && styles.textActive]}>{label}</Text>
+      <Text style={[styles.text, active && styles.textActive, fontSize ? { fontSize } : null]}>{label}</Text>
     </Pressable>
   );
 }
