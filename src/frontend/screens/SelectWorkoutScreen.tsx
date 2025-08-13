@@ -23,6 +23,8 @@ import { deleteWorkoutSafe } from '../../backend/repositories/workoutsRepo';
 import type { BodyPart, Workout } from '../../db/types';
 import { upsertBodyPart } from '../../backend/repositories/bodyPartsRepo';
 import CircleButton from '../../ui/CircleButton';
+import HamburgerMenu from '../../ui/HamburgerMenu';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 
 /*
  * Minimal screen:
@@ -30,8 +32,9 @@ import CircleButton from '../../ui/CircleButton';
  * 2) When a body part is selected, load its workouts
  * 3) Allow adding a workout (unique per body part thanks to DB index)
  */
-type Props = { onSelectWorkout?: (w: Workout) => void; onViewHistory?: (w: Workout) => void };
-export default function SelectWorkoutScreen({ onSelectWorkout, onViewHistory }: Props) {
+type Props = { onSelectWorkout?: (w: Workout) => void; onViewHistory?: (w: Workout) => void; onDashboard?: () => void };
+export default function SelectWorkoutScreen({ onSelectWorkout, onViewHistory, onDashboard }: Props) {
+  const [menuVisible, setMenuVisible] = useState(false);
   const [showAddConfirm, setShowAddConfirm] = useState(false);
   const [editingWorkoutId, setEditingWorkoutId] = useState<number | null>(null);
   const [editingWorkoutName, setEditingWorkoutName] = useState('');
@@ -120,15 +123,29 @@ export default function SelectWorkoutScreen({ onSelectWorkout, onViewHistory }: 
 
   return (
     <SafeAreaView style={[styles.safe, { flex: 1 }]}> 
-      {/* Welcome and quote section */}
-      <View style={{ marginTop: 16, marginBottom: 24, alignItems: 'center' }}>
-        {/* Commenting out next line for dynamic rendering of username from database */}
-  {/* <Text style={{ color: '#FFD700', fontSize: 26, fontWeight: '900', letterSpacing: 1 }}>Hi {'<Username>'}</Text> */}
-        <Text style={{ color: '#FFD700', fontSize: 26, fontWeight: '900', letterSpacing: 1 }}>Hi AK</Text>
-        <Text style={{ color: '#bfae60', fontSize: 14, fontWeight: '600', marginTop: 4, textAlign: 'center' }}>
-          Building for Courage and Wisdom
-        </Text>
+      {/* Top bar with hamburger menu and greeting */}
+      <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 16, marginBottom: 24, justifyContent: 'space-between', paddingHorizontal: 4 }}>
+        <Pressable onPress={() => setMenuVisible(true)} style={{ padding: 4 }}>
+          {/* Hamburger icon (MaterialIcons or fallback) */}
+          <MaterialIcons name="menu" size={32} color="#FFD700" />
+        </Pressable>
+        <View style={{ flex: 1, alignItems: 'center' }}>
+          <Text style={{ color: '#FFD700', fontSize: 26, fontWeight: '900', letterSpacing: 1 }}>🔥FITSTREAK🔥</Text>
+          <Text style={{ color: '#bfae60', fontSize: 14, fontWeight: '600', marginTop: 4, textAlign: 'center' }}>
+            Building for Courage and Wisdom
+          </Text>
+        </View>
+        <View style={{ width: 32 }} />
       </View>
+      {/* Hamburger menu modal */}
+      <HamburgerMenu
+        visible={menuVisible}
+        onClose={() => setMenuVisible(false)}
+        onDashboard={() => {
+          setMenuVisible(false);
+          onDashboard && onDashboard();
+        }}
+      />
       {/* Fixed body part selector, placed lower for spacing */}
       <View style={{ height: CONTAINER_SIZE, justifyContent: 'flex-start', alignItems: 'center', marginTop: 12 }}>
         <View style={{ width: CONTAINER_SIZE, height: CONTAINER_SIZE, position: 'relative', justifyContent: 'center', alignItems: 'center' }}>
