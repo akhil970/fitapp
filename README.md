@@ -1,7 +1,3 @@
-Here’s a ready-to-drop **README.md** for your repo. It explains what the app is, how to clone/run it on macOS (iOS + Android), and a few common fixes so newcomers feel comfy hacking on it.
-
----
-
 # Fit — Offline Workout Logger (iOS & Android)
 
 Fit is a **privacy-first, single-user** workout tracker that runs entirely on your phone.
