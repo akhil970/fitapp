@@ -1,97 +1,232 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# Fit — Offline Workout Logger (iOS & Android)
 
-# Getting Started
+Fit is a  privacy-first, single-user workout tracker that runs entirely on your phone.
+It stores your data locally in an encrypted SQLite database and lets you log sets (reps + weight), then view simple progress history. A one-tap ''CSV backup  exports your data so you can move it anywhere.
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+## Features
 
-## Step 1: Start Metro
+* Local, single-user auth (username + password hash)
+* Body parts → workouts → sessions → sets (reps, weight, timestamps)
+* Fast local DB (SQLite via `react-native-sqlite-storage`) with migrations
+* History summaries and simple progress views
+* One-tap CSV  backup 
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+  * iOS: saved to app Documents
+  * Android: saved to app Cache and shared (no extra permissions)
+* No cloud, no tracking ✦ your data stays on your device
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+## Tech Stack
 
-```sh
-# Using npm
+*  React Native  (RN 0.80)
+*  DB:  `react-native-sqlite-storage` (+ SQLCipher-ready)
+*  Secure storage:  `react-native-encrypted-storage`
+*  Backup/Share:  `react-native-fs`, `react-native-share`
+*  (Optional) Document picking:  `@react-native-documents/picker`
+*  Package manager:   npm  (stick to npm; don’t mix with yarn)
+
+## Project Structure (high level)
+
+```
+fitapp/
+├─ android/              # Android project (Gradle)
+├─ ios/                  # iOS project (Xcode workspace)
+├─ src/
+│  ├─ db/
+│  │  ├─ index.ts        # DB open/init + seed + FK on
+│  │  ├─ migrations.ts   # PRAGMA user_version migrations
+│  │  └─ types.ts        # shared TS types
+│  ├─ backend/
+│  │  └─ repositories/   # tiny data-access layers (auth, bodyParts, workouts, logs/sets)
+│  └─ frontend/
+│     └─ screens/        # simple screens (select workout, log session, history)
+├─ index.js              # RN entry -> src/App.tsx
+├─ App.tsx               # screen switcher (no nav lib yet)
+└─ package.json
+```
+
+---
+
+## Quick Start
+
+### 1) Clone and install
+
+```bash
+git clone <your-repo-url> fitapp
+cd fitapp
+npm install
+```
+
+### 2) Start Metro (JS dev server)
+
+```bash
 npm start
-
-# OR using Yarn
-yarn start
 ```
 
-## Step 2: Build and run your app
+---
 
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
+## Run on iOS (macOS + Xcode)
 
-### Android
+ Requirements 
 
-```sh
-# Using npm
-npm run android
+* macOS with Xcode (Command Line Tools installed)
+* CocoaPods (`sudo gem install cocoapods` once)
 
-# OR using Yarn
-yarn android
+ Install Pods & open workspace 
+
+```bash
+cd ios
+pod install
+open fitapp.xcworkspace
 ```
 
-### iOS
+ Build/Run 
 
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
+* Select a  Simulator  (no Apple developer account needed) and press  ▶︎ .
+* To run on a  physical iPhone  with free provisioning:
 
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
+  * In Xcode: select the  fitapp  target →  Signing & Capabilities 
+  * Check  Automatically manage signing , pick your  Personal Team , and set a  unique Bundle ID  (e.g., `com.yourname.fitapp`)
+  * Plug in the iPhone, trust the device, then  ▶︎ 
 
-```sh
-bundle install
+> Tip: If you just see a black screen, it’s likely dark mode + default styles. We set explicit light backgrounds in the UI, but keep your device’s dark mode in mind while developing.
+
+---
+
+## Run on Android (macOS + Android Studio)
+
+ Requirements 
+
+* Android Studio (SDKs + Platform Tools installed)
+*  JDK 17  for Gradle/NDK builds (RN 0.80 is happiest on 17)
+
+ One-time environment (macOS) 
+
+```bash
+# Make sure these paths match your machine.
+echo "sdk.dir=$HOME/Library/Android/sdk" > android/local.properties
+
+# Put these in ~/.zshrc so new terminals inherit them:
+export ANDROID_HOME="$HOME/Library/Android/sdk"
+export PATH="$PATH:$ANDROID_HOME/emulator:$ANDROID_HOME/platform-tools"
+export JAVA_HOME=$(/usr/libexec/java_home -v 17)
+export PATH="$JAVA_HOME/bin:$PATH"
 ```
 
-Then, and every time you update your native dependencies, run:
+Then reload your shell: `source ~/.zshrc`
 
-```sh
-bundle exec pod install
+ Device/Emulator 
+
+* In Android Studio →  Device Manager  → create a Pixel emulator (API 35 recommended), or
+* Plug in a device, enable  Developer options  and  USB debugging , accept the RSA prompt.
+
+ Build/Run 
+
+```bash
+# (Make sure Metro is running in another terminal: npm start)
+npx react-native run-android
 ```
 
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
+ If multiple devices  (emulator + phone), target by serial:
 
-```sh
-# Using npm
-npm run ios
-
-# OR using Yarn
-yarn ios
+```bash
+adb devices        # copy the serial
+npx react-native run-android --deviceId <SERIAL>
 ```
 
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
+---
 
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
+## Backups (CSV)
 
-## Step 3: Modify your app
+* iOS: file is saved to the app’s  Documents  directory and shared.
+* Android: file is saved to the app’s  Cache  directory and shared via a FileProvider (no permissions needed).
+* Filename is timestamped like: `workout_data_YYYYMMDD_HHmm.csv`.
 
-Now that you have successfully run the app, let's make changes!
+If you use your own share/paths, avoid `:` in filenames on Android and either use cache paths or add a FileProvider mapping for `files/`.
 
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
+---
 
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
+## Developing & Contributing
 
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
+### Common scripts
 
-## Congratulations! :tada:
+```bash
+npm start                   # Metro
+npx react-native run-ios    # quick simulator run (or use Xcode)
+npx react-native run-android
+```
 
-You've successfully run and modified your React Native App. :partying_face:
+### Where to add code
 
-### Now what?
+*  DB changes:  add a migration in `src/db/migrations.ts` (bump `PRAGMA user_version`)
+*  New data access:  add a small repo function in `src/backend/repositories/`
+*  UI:  add a screen in `src/frontend/screens/` and wire it in `App.tsx` (or install a nav lib later)
 
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
+### Security notes
 
-# Troubleshooting
+* We store  only a password hash  in `user_credentials`.
+* Use `react-native-encrypted-storage` for session flags/secrets—never plaintext passwords.
 
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
+---
 
-# Learn More
+## Troubleshooting
 
-To learn more about React Native, take a look at the following resources:
+ Android build fails with 
+`configureCMakeDebug[…] FAILED / "A restricted method in java.lang.System has been called"`
+→ Gradle is using JDK 21+ on your machine. Switch to  JDK 17 :
 
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+```bash
+export JAVA_HOME=$(/usr/libexec/java_home -v 17)
+export PATH="$JAVA_HOME/bin:$PATH"
+cd android && ./gradlew clean && cd ..
+npx react-native run-android
+```
+
+(Optional: in Android Studio →  Gradle JDK  = 17)
+
+ `SDK location not found` 
+→ Create `android/local.properties`:
+
+```bash
+echo "sdk.dir=$HOME/Library/Android/sdk" > android/local.properties
+```
+
+ `adb: command not found` / device not showing 
+→ Ensure `platform-tools` on `PATH` (see env above) and run:
+
+```bash
+adb kill-server && adb start-server
+adb devices
+```
+
+If it says `unauthorized`, accept the RSA prompt on the phone.
+
+ Share/backup errors on Android 
+
+* Use  cache  paths or add a  FileProvider .
+* Avoid `:` in filenames.
+
+ iOS device signing 
+
+* Use  Automatically manage signing , a unique  Bundle ID , and your  Personal Team .
+* Simulator never needs a paid account.
+
+---
+
+## Roadmap / Ideas
+
+* Charts (progression over time)
+* Exercise templates & timers
+* Export/import JSON
+* Optional passcode/biometrics gate
+
+---
+
+## License
+
+MIT — do what you like, just don’t remove attribution.
+
+---
+
+## Thanks
+
+Built with ❤️ using React Native and a lightweight, migration-friendly SQLite schema. Contributions and forks welcome—make it your own and keep lifting! 💪
