@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Pressable, Modal, StyleSheet, Image, Alert } from 'react-native';
+import { View, Text, Pressable, Modal, StyleSheet, Image, Alert, Platform } from 'react-native';
 import RNFS from 'react-native-fs';
 import Share from 'react-native-share';
 import { listWorkoutsWithBodyPart } from '../backend/repositories/workoutsRepo';
@@ -42,8 +42,10 @@ export default function HamburgerMenu({ visible, onClose, onDashboard }: { visib
       const YY = now.getFullYear().toString().slice(-2);
       const HH = pad(now.getHours());
       const mm = pad(now.getMinutes());
-      const fileName = `workout_data_${MM}${DD}${YY}_${HH}:${mm}.csv`;
-      const path = `${RNFS.DocumentDirectoryPath}/${fileName}`;
+      const fileName = `workout_data_${MM}${DD}${YY}.csv`;
+      const baseDir =
+            Platform.OS === 'android' ? RNFS.CachesDirectoryPath : RNFS.DocumentDirectoryPath;
+      const path = `${baseDir}/${fileName}`;
 
       // Write file
       await RNFS.writeFile(path, csv, 'utf8');
