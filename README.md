@@ -5,7 +5,6 @@ It stores your data locally in an encrypted SQLite database and lets you log set
 
 ## Features
 
-* Local, single-user auth (username + password hash)
 * Body parts → workouts → sessions → sets (reps, weight, timestamps)
 * Fast local DB (SQLite via `react-native-sqlite-storage`) with migrations
 * History summaries and simple progress views
